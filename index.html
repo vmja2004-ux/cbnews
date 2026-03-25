@@ -1,577 +1,425 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CB 專業監控中心</title>
-    <!-- 使用 Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 使用 Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-        
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            transition: background-color 0.5s ease;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CB 發行案件彙整系統</title>
+  
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+          }
         }
+      }
+    }
+  </script>
 
-        .dark {
-            background-color: #0f172a;
-            color: #f1f5f9;
-        }
-
-        /* 滾動條樣式 */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-            background: #334155;
-        }
-
-        .glass-nav {
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-
-        .card-shadow {
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
-        }
-
-        .sort-active {
-            color: #6366f1 !important;
-            opacity: 1 !important;
-        }
-
-        .animate-pulse-slow {
-            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-    </style>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    borderRadius: {
-                        '3xl': '1.5rem',
-                        '4xl': '2.5rem',
-                    }
-                }
-            }
-        }
-    </script>
+  <!-- 內建 SVG 圖示資源 (替換原本的 Lucide React) -->
+  <script>
+    const Icons = {
+      Moon: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>`,
+      Sun: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-amber-400"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>`,
+      UploadCloud: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m16 16-4-4-4 4"></path></svg>`,
+      FileSpreadsheet: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h2"></path><path d="M8 17h2"></path><path d="M14 13h2"></path><path d="M14 17h2"></path></svg>`,
+      Search: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>`,
+      AlertCircle: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`,
+      ArrowUpDown: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-4 4-4-4"></path><path d="M17 20V4"></path><path d="m3 8 4-4 4 4"></path><path d="M7 4v16"></path></svg>`,
+      ArrowUp: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"></path><path d="M12 19V5"></path></svg>`,
+      ArrowDown: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"></path><path d="m19 12-7 7-7-7"></path></svg>`,
+      Sparkles: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>`,
+      Loader2: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>`,
+      ExternalLink: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`
+    };
+  </script>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen pb-20">
-
-    <!-- Navbar -->
-    <nav id="navbar" class="bg-slate-900 border-b border-slate-800 px-6 sm:px-10 py-6 sticky top-0 z-40 transition-colors duration-500 text-white">
-        <div class="max-w-[1700px] mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-5">
-                <div class="bg-indigo-600 p-3 rounded-2xl rotate-3 shadow-indigo-500/40 shadow-xl">
-                    <i data-lucide="trending-up" class="w-7 h-7"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-black tracking-tight leading-none">CB 專業監控中心</h1>
-                    <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-[0.4em] mt-2 opacity-80">Quant Analytics Engine</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-4">
-                <button onclick="toggleDarkMode()" class="p-3 rounded-2xl transition-all bg-slate-800 text-slate-400 hover:text-white active:scale-90" id="theme-btn">
-                    <i data-lucide="moon" class="w-6 h-6" id="theme-icon"></i>
-                </button>
-                <div class="hidden md:flex items-center gap-4 bg-slate-800 px-5 py-2.5 rounded-2xl border border-slate-700">
-                    <i data-lucide="calendar" class="w-5 h-5 text-indigo-400"></i>
-                    <span class="text-sm font-bold text-slate-300" id="current-date"></span>
-                </div>
-            </div>
+<body class="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-300 font-sans">
+  
+  <!-- 頂部導覽列 -->
+  <header class="bg-white dark:bg-slate-800 shadow-sm sticky top-0 z-10 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <div class="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-indigo-600 dark:text-indigo-400" id="icon-logo">
+          <!-- FileSpreadsheet Icon -->
         </div>
-    </nav>
+        <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-blue-500 dark:from-indigo-400 dark:to-blue-300">
+          CB 發行案件彙整系統
+        </h1>
+      </div>
+      <button
+        id="theme-toggle-btn"
+        class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        aria-label="切換深色模式"
+      >
+        <!-- Sun/Moon Icon -->
+      </button>
+    </div>
+  </header>
 
-    <main class="max-w-[1700px] mx-auto px-6 sm:px-10 py-12">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- 控制區塊 (搜尋與上傳檔案) -->
+    <div class="mb-8 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 transition-colors duration-300">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         
-        <!-- Upload Zone -->
-        <div id="upload-zone" class="group mb-16 border-[5px] border-dashed rounded-[3rem] p-20 text-center transition-all duration-500 cursor-pointer border-slate-200 bg-white hover:border-indigo-400 hover:shadow-2xl">
-            <input type="file" id="file-input" class="hidden" accept=".csv,.txt">
-            <div class="bg-gradient-to-br from-indigo-500 to-blue-700 w-28 h-28 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-2xl group-hover:scale-110 transition-transform">
-                <i data-lucide="file-up" class="w-14 h-14 text-white"></i>
-            </div>
-            <h2 class="text-4xl font-black mb-6 tracking-tight text-slate-800" id="upload-title">匯入 CB 資訊看板</h2>
-            <p class="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed font-medium">
-                自動篩選門檻：<span class="text-indigo-600 font-black">轉換價值 > 85</span> 且 <span class="text-indigo-600 font-black">剩餘比例 > 30%</span>。<br/>
-                建議匯入包含日期序列之專業報表以獲得新高判定。
-            </p>
+        <!-- 搜尋列 -->
+        <div class="flex-1 w-full sm:max-w-sm relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500" id="icon-search">
+            <!-- Search Icon -->
+          </div>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="搜尋代碼或標的名稱 (例如：23742、佳能)..."
+            class="block w-full pl-10 pr-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl leading-5 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-colors shadow-sm"
+          />
         </div>
-
-        <!-- File Info Bar (Hidden by default) -->
-        <div id="file-info" class="hidden mb-12 border-2 border-indigo-100 bg-white rounded-[2.5rem] p-8 shadow-2xl flex flex-col xl:flex-row items-center justify-between gap-8">
-            <div class="flex items-center gap-8">
-                <div class="bg-indigo-600 p-6 rounded-[2rem] shadow-2xl">
-                    <i data-lucide="file-spreadsheet" class="w-10 h-10 text-white"></i>
-                </div>
-                <div>
-                    <h3 id="file-name-display" class="font-black text-3xl tracking-tight mb-2 text-slate-800">檔名顯示區</h3>
-                    <div class="flex flex-wrap items-center gap-4">
-                        <span class="flex items-center gap-2 text-sm font-black text-indigo-600 bg-indigo-50 px-4 py-1.5 rounded-full border border-indigo-100">
-                            <i data-lucide="shield-check" class="w-4 h-4"></i> 符合門檻標的：<span id="match-count">0</span> 檔
-                        </span>
-                        <span class="text-sm font-bold text-slate-400 bg-slate-100 px-4 py-1.5 rounded-full">
-                            原始總量：<span id="total-count">0</span> 檔
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <button onclick="resetData()" class="px-8 py-4 bg-slate-100 text-slate-500 hover:bg-rose-50 hover:text-rose-600 rounded-[1.5rem] transition-all font-black text-base flex items-center gap-3">
-                <i data-lucide="x" class="w-5 h-5"></i> 重新選擇數據源
-            </button>
+        
+        <!-- 上傳檔案按鈕 -->
+        <div class="relative w-full sm:w-auto">
+          <input
+            type="file"
+            id="file-input"
+            accept=".csv"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            title="點擊上傳 CSV 檔案"
+          />
+          <button class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors shadow-sm">
+            <span id="icon-upload"></span>
+            <span>匯入 CSV 資料</span>
+          </button>
         </div>
+      </div>
 
-        <!-- Stats Tabs -->
-        <div id="stats-container" class="hidden grid grid-cols-1 md:grid-cols-3 gap-10 mb-16">
-            <div onclick="setActiveTab('cbas_high')" id="tab-cbas" class="stat-tab group cursor-pointer p-10 rounded-[2.5rem] border-2 border-emerald-500 bg-white shadow-3xl -translate-y-3 transition-all duration-300 relative overflow-hidden">
-                <div class="flex justify-between items-start mb-10">
-                    <div class="p-5 rounded-[1.5rem] bg-emerald-500 text-white shadow-xl"><i data-lucide="activity" class="w-8 h-8"></i></div>
-                    <span id="stat-cbas" class="text-6xl font-black tracking-tighter text-emerald-600">0</span>
-                </div>
-                <h3 class="font-black text-2xl text-slate-900">CBAS 10 日新高</h3>
-                <p class="text-base mt-3 font-medium text-slate-500">主力籌碼持續增長中</p>
-                <div class="absolute bottom-0 left-0 w-full h-2 bg-emerald-500"></div>
-            </div>
+      <!-- 錯誤提示 -->
+      <div id="error-container" class="hidden mt-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg flex items-center gap-2 text-sm border border-red-200 dark:border-red-800">
+        <span id="icon-alert"></span>
+        <span id="error-text"></span>
+      </div>
+    </div>
 
-            <div onclick="setActiveTab('vol_high')" id="tab-vol" class="stat-tab group cursor-pointer p-10 rounded-[2.5rem] border-2 border-slate-100 bg-white hover:border-blue-300 transition-all duration-300 relative overflow-hidden">
-                <div class="flex justify-between items-start mb-10">
-                    <div class="p-5 rounded-[1.5rem] bg-slate-100 text-slate-400"><i data-lucide="bar-chart-3" class="w-8 h-8"></i></div>
-                    <span id="stat-vol" class="text-6xl font-black tracking-tighter text-slate-100">0</span>
-                </div>
-                <h3 class="font-black text-2xl text-slate-500">成交量 10 日新高</h3>
-                <p class="text-base mt-3 font-medium text-slate-400">市場人氣噴發指標</p>
-            </div>
+    <!-- 資料表格區塊 -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors duration-300">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr id="table-head" class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+              <!-- 表頭由 JS 動態生成 -->
+            </tr>
+          </thead>
+          <tbody id="table-body" class="divide-y divide-slate-200 dark:divide-slate-700">
+            <!-- 表格內容由 JS 動態生成 -->
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- 表格底部資訊 -->
+      <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-sm text-slate-500 dark:text-slate-400 flex justify-between items-center">
+        <span id="item-count">顯示 0 筆案件資料</span>
+        <span class="text-xs">點擊欄位標題即可進行排序</span>
+      </div>
+    </div>
+  </main>
 
-            <div onclick="setActiveTab('ref_high')" id="tab-ref" class="stat-tab group cursor-pointer p-10 rounded-[2.5rem] border-2 border-slate-100 bg-white hover:border-amber-300 transition-all duration-300 relative overflow-hidden">
-                <div class="flex justify-between items-start mb-10">
-                    <div class="p-5 rounded-[1.5rem] bg-slate-100 text-slate-400"><i data-lucide="layout-dashboard" class="w-8 h-8"></i></div>
-                    <span id="stat-ref" class="text-6xl font-black tracking-tighter text-slate-100">0</span>
-                </div>
-                <h3 class="font-black text-2xl text-slate-500">參考價 20 日新高</h3>
-                <p class="text-base mt-3 font-medium text-slate-400">長期結構強勢突破</p>
-            </div>
-        </div>
+  <script>
+    // --- 預設資料與設定 ---
+    const SAMPLE_DATA = [
+      { 代碼: '25354', 發行標的: '達工四', 溢價率: '101.00%', 發行方式: '-', 'TCRI/擔保': 'TCRI5', '額度(億元)': '10', 年期: '3Y' },
+      { 代碼: '22391', 發行標的: '英利-KY一', 溢價率: '101.06%', 發行方式: '-', 'TCRI/擔保': 'TCRI4', '額度(億元)': '11', 年期: '3Y' },
+      { 代碼: '82131', 發行標的: '志超一', 溢價率: '107.72%', 發行方式: '-', 'TCRI/擔保': 'TCRI4', '額度(億元)': '8', 年期: '2.5Y' },
+      { 代碼: '61012', 發行標的: '寬魚國際二', 溢價率: '105.01%', 發行方式: '詢圈', 'TCRI/擔保': '-', '額度(億元)': '2.5', 年期: '3Y' },
+      { 代碼: '23742', 發行標的: '佳能二', 溢價率: '105.19%', 發行方式: '詢圈', 'TCRI/擔保': 'TCRI6', '額度(億元)': '3', 年期: '5Y' },
+      { 代碼: '82103', 發行標的: '勤誠三', 溢價率: '103.50%', 發行方式: '競拍', 'TCRI/擔保': 'TCRI4', '額度(億元)': '7', 年期: '3Y' },
+    ];
 
-        <!-- Table Section -->
-        <div id="table-container" class="hidden rounded-[3rem] border border-slate-200 bg-white shadow-3xl overflow-hidden transition-all duration-500">
-            <div class="px-12 py-10 border-b border-slate-100 bg-slate-50/50 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-10">
-                <div class="flex items-center gap-6">
-                    <div class="p-4 rounded-2xl bg-white shadow-lg border border-slate-100 text-indigo-600">
-                        <i data-lucide="filter" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h2 id="list-title" class="text-3xl font-black tracking-tight text-slate-800">監控名單</h2>
-                        <div class="flex items-center gap-3 mt-2">
-                            <span class="text-xs font-bold text-indigo-500 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100">轉換價值 > 85</span>
-                            <span class="text-xs font-bold text-indigo-500 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100">剩餘比例 > 30%</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="relative w-full xl:w-[450px]">
-                    <i data-lucide="search" class="w-6 h-6 absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="search-input" oninput="handleSearch()" placeholder="搜尋代號或名稱..." class="w-full pl-16 pr-8 py-5 border border-slate-200 rounded-[1.5rem] outline-none transition-all text-base font-bold focus:ring-4 focus:ring-indigo-500/10">
-                </div>
-            </div>
+    const COLUMNS = [
+      { key: '代碼', label: '代碼' },
+      { key: '發行標的', label: '標的名稱' },
+      { key: '溢價率', label: '溢價率 (%)' },
+      { key: '發行方式', label: '發行方式' },
+      { key: 'TCRI/擔保', label: 'TCRI / 擔保' },
+    { key: '額度(億元)', label: '額度 (億元)' },
+    { key: '年期', label: '年期' },
+    { key: 'news_link', label: '相關新聞' }
+  ];
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[1200px]">
-                    <thead>
-                        <tr class="text-xs font-black uppercase tracking-[0.25em] text-slate-400 bg-white">
-                            <th class="px-12 py-8 cursor-pointer group hover:text-indigo-600" onclick="handleSort('symbol')">
-                                <div class="flex items-center gap-3">標的 <span id="sort-symbol"></span></div>
-                            </th>
-                            <th class="px-12 py-8 text-right cursor-pointer group hover:text-indigo-600" onclick="handleSort('price')">
-                                <div class="flex items-center justify-end gap-3">轉債價格 <span id="sort-price"></span></div>
-                            </th>
-                            <th class="px-12 py-8 text-right cursor-pointer group hover:text-indigo-600" onclick="handleSort('conversionValue')">
-                                <div class="flex items-center justify-end gap-3 text-indigo-600">轉換價值 <span id="sort-conversionValue"></span></div>
-                            </th>
-                            <th class="px-12 py-8 text-right cursor-pointer group hover:text-indigo-600" onclick="handleSort('volume')">
-                                <div class="flex items-center justify-end gap-3">成交量 <span id="sort-volume"></span></div>
-                            </th>
-                            <th class="px-12 py-8 text-right cursor-pointer group hover:text-indigo-600" onclick="handleSort('premium')">
-                                <div class="flex items-center justify-end gap-3">折溢價 <span id="sort-premium"></span></div>
-                            </th>
-                            <th class="px-12 py-8 text-right font-black text-indigo-600">剩餘%</th>
-                            <th class="px-12 py-8 text-center cursor-pointer group hover:text-indigo-600" onclick="handleSort('trust')">
-                                <div class="flex items-center justify-center gap-3">投信買超 <span id="sort-trust"></span></div>
-                            </th>
-                            <th class="px-12 py-8 text-right cursor-pointer group hover:text-indigo-600 bg-indigo-50/40" onclick="handleSort('cbas')">
-                                <div class="flex items-center justify-end gap-3">CBAS 拆解 <span id="sort-cbas"></span></div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body" class="divide-y divide-slate-100">
-                        <!-- Data Rows -->
-                    </tbody>
-                </table>
-            </div>
+  // --- 狀態管理 ---
+  let state = {
+    data: [...SAMPLE_DATA],
+    isDarkMode: false,
+    sortConfig: { key: null, direction: null },
+    searchQuery: '',
+    error: ''
+  };
 
-            <div class="px-12 py-10 bg-slate-900 flex flex-col sm:flex-row justify-between items-center gap-10">
-                <div class="flex gap-14 text-xs font-black uppercase tracking-[0.4em] text-slate-400">
-                    <div>當前顯示：<span id="display-count" class="text-white bg-indigo-500/30 px-3 py-1.5 rounded-xl border border-indigo-500/20">0 筆</span></div>
-                    <div>符合門檻總量：<span id="match-total-display" class="text-white bg-slate-700 px-3 py-1.5 rounded-xl">0 筆</span></div>
-                </div>
-                <div class="flex gap-8">
-                    <div class="flex items-center gap-4 px-6 py-3 rounded-2xl bg-slate-800 border border-slate-700">
-                        <div class="w-3 h-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></div>
-                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">CBAS 新高標籤</span>
-                    </div>
-                    <div class="flex items-center gap-4 px-6 py-3 rounded-2xl bg-slate-800 border border-slate-700">
-                        <div class="w-3 h-3 rounded-full bg-blue-500 shadow-lg shadow-blue-500/50"></div>
-                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">成交爆量標籤</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+  // --- DOM 元素綁定 ---
+    const elements = {
+      themeToggleBtn: document.getElementById('theme-toggle-btn'),
+      searchInput: document.getElementById('search-input'),
+      fileInput: document.getElementById('file-input'),
+      errorContainer: document.getElementById('error-container'),
+      errorText: document.getElementById('error-text'),
+      tableHead: document.getElementById('table-head'),
+      tableBody: document.getElementById('table-body'),
+      itemCount: document.getElementById('item-count'),
+    };
 
-        <!-- Empty State -->
-        <div id="empty-state" class="hidden py-52 flex flex-col items-center justify-center">
-            <div class="relative mb-10">
-                <div class="absolute inset-0 blur-[100px] opacity-30 animate-pulse bg-indigo-200" id="empty-pulse"></div>
-                <i data-lucide="alert-circle" class="w-36 h-36 relative z-10 text-slate-100" id="empty-icon"></i>
-            </div>
-            <p class="text-3xl font-black tracking-tight text-slate-300" id="empty-text">目前無符合條件之標的</p>
-            <p class="text-slate-400 mt-4 text-lg font-medium">請確認匯入數據是否包含符合篩選條件之項目</p>
-        </div>
-    </main>
+    // 初始化靜態 Icon
+    document.getElementById('icon-logo').innerHTML = Icons.FileSpreadsheet;
+    document.getElementById('icon-search').innerHTML = Icons.Search;
+    document.getElementById('icon-upload').innerHTML = Icons.UploadCloud;
+    document.getElementById('icon-alert').innerHTML = Icons.AlertCircle;
 
-    <footer class="max-w-[1700px] mx-auto px-10 py-20 text-center">
-        <div class="h-[2px] w-full mb-12 opacity-10 bg-slate-200 dark:bg-slate-700" id="footer-line"></div>
-        <p class="text-sm font-black text-slate-400 uppercase tracking-[0.5em] mb-4">Quant Edge Financial Intelligence Dashboard</p>
-        <p class="text-xs font-bold text-slate-500 italic opacity-60">
-            篩選基準：轉換價值 > 85、剩餘比例 > 30% | HTML 專業版 v3.0
-        </p>
-    </footer>
+    // --- 核心邏輯 ---
 
-    <script>
-        // --- State Management ---
-        let rawData = [];
-        let displayData = [];
-        let activeTab = 'cbas_high';
-        let sortConfig = { key: 'cbas', direction: 'desc' };
-        let searchTerm = '';
-        let isDarkMode = false;
+    // 1. 深色模式切換
+    function toggleDarkMode() {
+      state.isDarkMode = !state.isDarkMode;
+      if (state.isDarkMode) {
+        document.documentElement.classList.add('dark');
+        elements.themeToggleBtn.innerHTML = Icons.Sun;
+      } else {
+        document.documentElement.classList.remove('dark');
+        elements.themeToggleBtn.innerHTML = Icons.Moon;
+      }
+    }
 
-        const THRESHOLD_CONV_VALUE = 85;
-        const THRESHOLD_REMAINING = 30;
+    // 2. CSV 解析器
+    function parseCSV(csvText) {
+      const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
+      if (lines.length < 2) return [];
 
-        // --- Init ---
-        window.onload = () => {
-            lucide.createIcons();
-            document.getElementById('current-date').innerText = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      const headers = lines[0].split(',').map(h => h.trim());
+      
+      return lines.slice(1).map(line => {
+        const values = [];
+        let inQuotes = false;
+        let currentValue = '';
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            values.push(currentValue.trim());
+            currentValue = '';
+          } else {
+            currentValue += char;
+          }
+        }
+        values.push(currentValue.trim());
+
+        const rowData = {};
+        headers.forEach((header, index) => {
+          rowData[header] = values[index] || '-';
+        });
+        return rowData;
+      });
+    }
+
+    // 3. 檔案上傳處理
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.name.endsWith('.csv')) {
+        showError('請上傳 .csv 格式的檔案');
+        event.target.value = ''; // 重置 input
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target.result;
+          const parsedData = parseCSV(text);
+          
+          if (parsedData.length > 0) {
+            const firstRow = parsedData[0];
+            const hasRequiredFields = ['發行標的', '溢價率', '額度(億元)'].every(field => field in firstRow);
             
-            // Drag and drop setup
-            const dropZone = document.getElementById('upload-zone');
-            dropZone.onclick = () => document.getElementById('file-input').click();
-            dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('border-indigo-500', 'bg-indigo-50'); };
-            dropZone.ondragleave = () => { dropZone.classList.remove('border-indigo-500', 'bg-indigo-50'); };
-            dropZone.ondrop = (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
-                const file = e.dataTransfer.files[0];
-                handleFile(file);
-            };
+            if (!hasRequiredFields) {
+              showError('CSV 檔案缺少必要的欄位 (如：發行標的, 溢價率, 額度(億元))');
+              return;
+            }
+          }
+          
+          state.data = parsedData;
+          state.sortConfig = { key: null, direction: null };
+          hideError();
+          render();
+        } catch (err) {
+          showError('解析檔案時發生錯誤，請檢查檔案格式。');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = ''; // 重置 input 讓下次同檔名也能觸發 onChange
+    }
 
-            document.getElementById('file-input').onchange = (e) => handleFile(e.target.files[0]);
+    // 4. 排序邏輯
+    window.handleSort = function(key) {
+      let direction = 'asc';
+      if (state.sortConfig.key === key && state.sortConfig.direction === 'asc') {
+        direction = 'desc';
+      } else if (state.sortConfig.key === key && state.sortConfig.direction === 'desc') {
+        direction = null;
+        key = null;
+      }
+      state.sortConfig = { key, direction };
+      render();
+    };
+
+    // 5. 錯誤訊息顯示/隱藏
+    function showError(msg) {
+      elements.errorText.textContent = msg;
+      elements.errorContainer.classList.remove('hidden');
+    }
+    
+    function hideError() {
+      elements.errorContainer.classList.add('hidden');
+      elements.errorText.textContent = '';
+    }
+
+    // 6. 計算處理後的資料 (搜尋 + 排序)
+    function getProcessedData() {
+      let filteredData = state.data;
+      
+      // 搜尋
+      if (state.searchQuery.trim() !== '') {
+        const query = state.searchQuery.toLowerCase();
+        filteredData = filteredData.filter(row => {
+          const targetName = row['發行標的'] || '';
+          const targetCode = row['代碼'] || '';
+          return targetName.toLowerCase().includes(query) || targetCode.toLowerCase().includes(query);
+        });
+      }
+
+      // 排序
+      if (!state.sortConfig.key || !state.sortConfig.direction) return filteredData;
+
+      return [...filteredData].sort((a, b) => {
+        let aValue = a[state.sortConfig.key] || '';
+        let bValue = b[state.sortConfig.key] || '';
+
+        const parseValue = (val) => {
+          if (typeof val !== 'string') return val;
+          const cleanVal = val.replace(/[%$,]/g, '').trim();
+          const num = parseFloat(cleanVal);
+          return isNaN(num) ? val : num;
         };
 
-        // --- Core Logic ---
+        const aParsed = parseValue(aValue);
+        const bParsed = parseValue(bValue);
 
-        function handleFile(file) {
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                parseCSV(e.target.result, file.name);
-            };
-            reader.readAsText(file);
+        if (aParsed < bParsed) return state.sortConfig.direction === 'asc' ? -1 : 1;
+        if (aParsed > bParsed) return state.sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+// --- 畫面渲染 ---
+function render() {
+  const processedData = getProcessedData();
+
+  // 渲染表頭
+  elements.tableHead.innerHTML = COLUMNS.map(col => {
+    let iconHtml = '';
+    let sortClass = '';
+    let onClick = '';
+    
+    if (col.key !== 'news_link') {
+      iconHtml = `<span class="opacity-0 group-hover:opacity-100 transition-opacity">${Icons.ArrowUpDown}</span>`;
+      if (state.sortConfig.key === col.key) {
+        iconHtml = `<span class="text-indigo-500">${state.sortConfig.direction === 'asc' ? Icons.ArrowUp : Icons.ArrowDown}</span>`;
+      }
+      sortClass = 'cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700/50 group select-none';
+      onClick = `onclick="handleSort('${col.key}')"`;
+    }
+
+    return `
+      <th 
+        ${onClick}
+        class="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap transition-colors ${sortClass}"
+      >
+        <div class="flex items-center gap-2">
+          ${col.label}
+          <span class="text-slate-400 dark:text-slate-500 transition-colors flex items-center">
+            ${iconHtml}
+          </span>
+        </div>
+      </th>
+    `;
+  }).join('');
+
+  // 渲染表格內容
+  if (processedData.length > 0) {
+    elements.tableBody.innerHTML = processedData.map(row => {
+      const tds = COLUMNS.map(col => {
+        // 處理 Google 新聞連結欄位
+        if (col.key === 'news_link') {
+           // 取前 4 碼作為股票代碼
+           const baseStockCode = String(row['代碼'] || '').substring(0, 4);
+           // 組合搜尋關鍵字 (包含公司名稱、代碼，並引導搜尋產業動態與概念股)
+           const query = encodeURIComponent(`${row['發行標的']} ${baseStockCode} 產業動態 概念股`);
+           // 建立 Google 搜尋網址 (如果加上 &tbm=nws 則會預設跳轉到"新聞"分頁，這裡使用一般搜尋以觸發 Google AI 摘要)
+           const searchUrl = `https://www.google.com/search?q=${query}`;
+           
+           const content = `
+             <a href="${searchUrl}" target="_blank" rel="noopener noreferrer" title="在新分頁搜尋此標的相關新聞" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 rounded-lg transition-colors shadow-sm whitespace-nowrap border border-blue-100 dark:border-blue-800 w-fit">
+               ${Icons.ExternalLink} Google 搜尋
+             </a>
+           `;
+           return `<td class="px-6 py-4 align-top pt-5">${content}</td>`;
         }
 
-        const cleanVal = (val) => {
-            if (!val) return 0;
-            return parseFloat(val.toString().replace(/[%,"]/g, '').replace(/\s/g, '')) || 0;
-        };
+        // 處理一般欄位
+        const value = row[col.key] || '-';
+        const displayValue = value === '' ? '-' : value;
+        
+        let textClass = 'text-slate-700 dark:text-slate-300 whitespace-nowrap';
+        if (col.key === '代碼') textClass = 'font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap';
+        if (col.key === '發行標的') textClass = 'font-medium text-indigo-600 dark:text-indigo-400 whitespace-nowrap';
 
-        function parseCSV(content, name) {
-            const lines = content.split(/\r?\n/).filter(l => l.trim() !== '');
-            if (lines.length < 3) return;
+        return `<td class="px-6 py-4 text-sm align-top ${textClass} pt-5">${displayValue}</td>`;
+      }).join('');
 
-            const splitCSVLine = (line) => {
-                const result = [];
-                let current = '';
-                let inQuotes = false;
-                for (let char of line) {
-                    if (char === '"') inQuotes = !inQuotes;
-                    else if (char === ',' && !inQuotes) { result.push(current); current = ''; }
-                    else { current += char; }
-                }
-                result.push(current);
-                return result;
-            };
+      return `<tr class="hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-colors group border-b border-transparent hover:border-indigo-100 dark:hover:border-indigo-800">${tds}</tr>`;
+    }).join('');
+  } else {
+    const emptyMsg = state.searchQuery ? '找不到符合搜尋條件的標的，請嘗試其他關鍵字。' : '目前沒有資料，請上傳 CSV 檔案。';
+    elements.tableBody.innerHTML = `
+      <tr>
+        <td colspan="${COLUMNS.length}" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+          ${emptyMsg}
+        </td>
+      </tr>
+    `;
+  }
 
-            const row0 = splitCSVLine(lines[0]);
-            const row1 = splitCSVLine(lines[1]);
+  // 更新計數
+  elements.itemCount.textContent = `顯示 ${processedData.length} 筆案件資料`;
+}
 
-            const findColumns = (category) => {
-                let start = row0.findIndex(h => h.includes(category));
-                if (start === -1) return [];
-                const indices = [];
-                for (let i = start; i < row1.length; i++) {
-                    if (i > start && row0[i] && row0[i].trim() !== '') break;
-                    indices.push(i);
-                }
-                return indices;
-            };
+// --- 事件監聽綁定 ---
+    elements.themeToggleBtn.addEventListener('click', toggleDarkMode);
+    
+    elements.searchInput.addEventListener('input', (e) => {
+      state.searchQuery = e.target.value;
+      render();
+    });
 
-            const idxSym = row1.indexOf('代號');
-            const idxName = row1.indexOf('名稱');
-            const idxPrice = row1.indexOf('轉債價格');
-            const idxConv = row1.indexOf('轉換價值');
-            const idxPrem = row1.indexOf('折溢價');
-            const idxRem = row1.indexOf('剩餘%');
+    elements.fileInput.addEventListener('change', handleFileUpload);
 
-            const cbasIdx = findColumns('CBAS拆解');
-            const volIdx = findColumns('CB成交量');
-            const refIdx = findColumns('轉債參考價');
-            const trustIdx = findColumns('投信買賣超');
-
-            rawData = lines.slice(2).map((line, index) => {
-                const cols = splitCSVLine(line);
-                const getSeries = (idx) => idx.map(i => cleanVal(cols[i]));
-                const cbasS = getSeries(cbasIdx);
-                const volS = getSeries(volIdx);
-                const refS = getSeries(refIdx);
-
-                const isHigh = (s, d) => {
-                    if (s.length < 2) return false;
-                    const cur = s[0];
-                    const hist = s.slice(1, d);
-                    return cur > 0 && cur >= Math.max(...hist);
-                };
-
-                return {
-                    id: index,
-                    symbol: cols[idxSym] || '',
-                    name: cols[idxName] || '',
-                    price: cleanVal(cols[idxPrice]),
-                    conversionValue: cleanVal(cols[idxConv]),
-                    volume: volS[0] || 0,
-                    premium: cols[idxPrem] || '0%',
-                    remaining: cols[idxRem] || '0%',
-                    trust: cleanVal(cols[trustIdx[0]]),
-                    cbas: cbasS[0] || 0,
-                    isCbas10High: isHigh(cbasS, 10),
-                    isVol10High: isHigh(volS, 10),
-                    isRef20High: isHigh(refS, 20),
-                    premiumVal: cleanVal(cols[idxPrem])
-                };
-            });
-
-            document.getElementById('upload-zone').classList.add('hidden');
-            document.getElementById('file-info').classList.remove('hidden');
-            document.getElementById('stats-container').classList.remove('hidden');
-            document.getElementById('table-container').classList.remove('hidden');
-            document.getElementById('file-name-display').innerText = name;
-
-            updateStats();
-            render();
-        }
-
-        function updateStats() {
-            const base = rawData.filter(d => d.conversionValue > THRESHOLD_CONV_VALUE && cleanVal(d.remaining) > THRESHOLD_REMAINING);
-            document.getElementById('stat-cbas').innerText = base.filter(d => d.isCbas10High).length;
-            document.getElementById('stat-vol').innerText = base.filter(d => d.isVol10High).length;
-            document.getElementById('stat-ref').innerText = base.filter(d => d.isRef20High).length;
-            document.getElementById('match-count').innerText = base.length;
-            document.getElementById('total-count').innerText = rawData.length;
-            document.getElementById('match-total-display').innerText = base.length + ' 筆';
-        }
-
-        function handleSearch() {
-            searchTerm = document.getElementById('search-input').value.toLowerCase();
-            render();
-        }
-
-        function handleSort(key) {
-            if (sortConfig.key === key) {
-                sortConfig.direction = sortConfig.direction === 'desc' ? 'asc' : 'desc';
-            } else {
-                sortConfig.key = key;
-                sortConfig.direction = 'desc';
-            }
-            render();
-        }
-
-        function setActiveTab(tab) {
-            activeTab = tab;
-            // Update UI tabs
-            const tabs = document.querySelectorAll('.stat-tab');
-            tabs.forEach(t => {
-                t.classList.remove('border-emerald-500', 'border-blue-500', 'border-amber-500', 'shadow-3xl', '-translate-y-3');
-                t.classList.add('border-slate-100');
-                const span = t.querySelector('span');
-                span.classList.remove('text-emerald-600', 'text-blue-600', 'text-amber-600');
-                span.classList.add('text-slate-100');
-                const iconBox = t.querySelector('.rounded-\\[1\\.5rem\\]');
-                iconBox.classList.remove('bg-emerald-500', 'bg-blue-500', 'bg-amber-500', 'text-white');
-                iconBox.classList.add('bg-slate-100', 'text-slate-400');
-            });
-
-            const activeT = document.getElementById('tab-' + tab.split('_')[0]);
-            const color = tab === 'cbas_high' ? 'emerald' : tab === 'vol_high' ? 'blue' : 'amber';
-            activeT.classList.remove('border-slate-100');
-            activeT.classList.add('border-' + color + '-500', 'shadow-3xl', '-translate-y-3');
-            activeT.querySelector('span').classList.remove('text-slate-100');
-            activeT.querySelector('span').classList.add('text-' + color + '-600');
-            const iconB = activeT.querySelector('.rounded-\\[1\\.5rem\\]');
-            iconB.classList.remove('bg-slate-100', 'text-slate-400');
-            iconB.classList.add('bg-' + color + '-500', 'text-white');
-
-            render();
-        }
-
-        function render() {
-            let filtered = rawData.filter(d => d.conversionValue > THRESHOLD_CONV_VALUE && cleanVal(d.remaining) > THRESHOLD_REMAINING);
-            
-            if (searchTerm) {
-                filtered = filtered.filter(d => d.name.toLowerCase().includes(searchTerm) || d.symbol.toLowerCase().includes(searchTerm));
-            }
-
-            switch(activeTab) {
-                case 'cbas_high': filtered = filtered.filter(d => d.isCbas10High); break;
-                case 'vol_high': filtered = filtered.filter(d => d.isVol10High); break;
-                case 'ref_high': filtered = filtered.filter(d => d.isRef20High); break;
-            }
-
-            if (sortConfig.key) {
-                filtered.sort((a, b) => {
-                    let aV = a[sortConfig.key];
-                    let bV = b[sortConfig.key];
-                    if (sortConfig.key === 'premium') { aV = a.premiumVal; bV = b.premiumVal; }
-                    return sortConfig.direction === 'desc' ? bV - aV : aV - bV;
-                });
-            }
-
-            // Update Sort Icons
-            document.querySelectorAll('[id^="sort-"]').forEach(el => el.innerHTML = '<i data-lucide="chevron-up" class="w-4 h-4 opacity-10"></i>');
-            const activeIcon = document.getElementById('sort-' + sortConfig.key);
-            if (activeIcon) {
-                activeIcon.innerHTML = `<i data-lucide="chevron-${sortConfig.direction === 'desc' ? 'down' : 'up'}" class="w-4 h-4 text-indigo-500"></i>`;
-            }
-
-            const tbody = document.getElementById('table-body');
-            tbody.innerHTML = '';
-            
-            if (filtered.length === 0) {
-                document.getElementById('table-container').classList.add('hidden');
-                document.getElementById('empty-state').classList.remove('hidden');
-            } else {
-                document.getElementById('table-container').classList.remove('hidden');
-                document.getElementById('empty-state').classList.add('hidden');
-                
-                filtered.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.className = `transition-all group ${isDarkMode ? 'hover:bg-indigo-500/10' : 'hover:bg-indigo-50/20'}`;
-                    
-                    const premClass = item.premiumVal > 15 
-                        ? (isDarkMode ? 'bg-rose-900/20 text-rose-400 border-rose-900/50' : 'bg-rose-50 text-rose-600 border-rose-100')
-                        : (isDarkMode ? 'bg-emerald-900/20 text-emerald-400 border-emerald-900/50' : 'bg-emerald-50 text-emerald-600 border-emerald-100');
-
-                    row.innerHTML = `
-                        <td class="px-12 py-8">
-                            <div class="flex flex-col gap-1">
-                                <span class="text-sm font-black font-mono tracking-tighter ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}">${item.symbol}</span>
-                                <span class="font-black text-xl group-hover:text-indigo-600 transition-colors ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}">${item.name}</span>
-                            </div>
-                        </td>
-                        <td class="px-12 py-8 text-right">
-                            <span class="font-mono font-black text-lg ${isDarkMode ? 'text-slate-300' : 'text-slate-800'}">${item.price.toFixed(2)}</span>
-                            ${item.isRef20High ? `<div class="flex items-center justify-end gap-1 text-[11px] font-black text-amber-500 mt-2 uppercase bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">20D Breakout</div>` : ''}
-                        </td>
-                        <td class="px-12 py-8 text-right">
-                            <span class="font-mono font-black text-xl ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}">${item.conversionValue.toFixed(2)}</span>
-                        </td>
-                        <td class="px-12 py-8 text-right">
-                            <div class="flex flex-col items-end gap-1">
-                                <span class="font-mono font-black text-lg ${isDarkMode ? 'text-slate-100' : 'text-slate-900'}">${item.volume.toLocaleString()}</span>
-                                ${item.isVol10High ? `<span class="text-[11px] font-black text-blue-500 uppercase bg-blue-500/10 px-2 py-0.5 rounded-lg border border-blue-500/20 tracking-tighter">Volume High</span>` : ''}
-                            </div>
-                        </td>
-                        <td class="px-12 py-8 text-right">
-                            <span class="px-5 py-2 rounded-2xl text-xs font-black border-2 ${premClass}">${item.premium}</span>
-                        </td>
-                        <td class="px-12 py-8 text-right">
-                            <span class="font-black text-xl italic tracking-tighter ${isDarkMode ? 'text-slate-300' : 'text-slate-800'}">${item.remaining}</span>
-                        </td>
-                        <td class="px-12 py-8 text-center">
-                            ${item.trust !== 0 ? `
-                                <span class="inline-flex items-center justify-center min-w-[65px] px-4 py-2.5 rounded-2xl font-black text-sm border-2 ${item.trust > 0 ? 'bg-indigo-600 text-white shadow-xl border-indigo-400' : 'bg-slate-100 text-slate-500 border-slate-200'}">
-                                    ${item.trust > 0 ? '+'+item.trust : item.trust}
-                                </span>
-                            ` : '<span class="text-slate-300 opacity-30">---</span>'}
-                        </td>
-                        <td class="px-12 py-8 text-right transition-colors ${isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-50/40'}">
-                            <div class="flex flex-col items-end gap-1.5">
-                                <span class="font-mono font-black text-2xl tracking-tighter ${isDarkMode ? 'text-indigo-400' : 'text-indigo-700'}">${item.cbas.toLocaleString()}</span>
-                                ${item.isCbas10High ? `<span class="inline-flex items-center gap-1.5 text-[11px] font-black text-emerald-500 uppercase bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/40 animate-pulse">CBAS 10D High</span>` : ''}
-                            </div>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            }
-            
-            document.getElementById('display-count').innerText = filtered.length + ' 筆';
-            lucide.createIcons();
-        }
-
-        function toggleDarkMode() {
-            isDarkMode = !isDarkMode;
-            const html = document.documentElement;
-            const themeBtn = document.getElementById('theme-btn');
-            const themeIcon = document.getElementById('theme-icon');
-            
-            if (isDarkMode) {
-                html.classList.add('dark');
-                themeIcon.setAttribute('data-lucide', 'sun');
-                themeBtn.classList.replace('text-slate-400', 'text-amber-400');
-            } else {
-                html.classList.remove('dark');
-                themeIcon.setAttribute('data-lucide', 'moon');
-                themeBtn.classList.replace('text-amber-400', 'text-slate-400');
-            }
-            lucide.createIcons();
-            render();
-        }
-
-        function resetData() {
-            rawData = [];
-            document.getElementById('upload-zone').classList.remove('hidden');
-            document.getElementById('file-info').classList.add('hidden');
-            document.getElementById('stats-container').classList.add('hidden');
-            document.getElementById('table-container').classList.add('hidden');
-            document.getElementById('empty-state').classList.add('hidden');
-            document.getElementById('file-input').value = '';
-        }
-
-    </script>
+    // --- 初始啟動 ---
+    // 設定初始圖示 (預設為淺色模式，顯示月亮)
+    elements.themeToggleBtn.innerHTML = Icons.Moon;
+    render();
+    
+  </script>
 </body>
 </html>
